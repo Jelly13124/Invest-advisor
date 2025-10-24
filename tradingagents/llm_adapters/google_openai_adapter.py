@@ -30,7 +30,6 @@ class ChatGoogleOpenAI(ChatGoogleGenerativeAI):
         
         # 设置 Google AI 的默认配置
         kwargs.setdefault("temperature", 0.1)
-        kwargs.setdefault("max_tokens", 2000)
         
         # 检查 API 密钥
         google_api_key = kwargs.get("google_api_key") or os.getenv("GOOGLE_API_KEY")
@@ -48,7 +47,7 @@ class ChatGoogleOpenAI(ChatGoogleGenerativeAI):
         logger.info(f"✅ Google AI OpenAI 兼容适配器初始化成功")
         logger.info(f"   模型: {kwargs.get('model', 'gemini-pro')}")
         logger.info(f"   温度: {kwargs.get('temperature', 0.1)}")
-        logger.info(f"   最大Token: {kwargs.get('max_tokens', 2000)}")
+        logger.info(f"   最大Token: 无限制")
     
     def _generate(self, messages: List[BaseMessage], stop: Optional[List[str]] = None, **kwargs) -> LLMResult:
         """重写生成方法，优化工具调用处理和内容格式"""
@@ -233,7 +232,6 @@ def create_google_openai_llm(
     model: str = "gemini-2.5-flash-lite-preview-06-17",
     google_api_key: Optional[str] = None,
     temperature: float = 0.1,
-    max_tokens: int = 2000,
     **kwargs
 ) -> ChatGoogleOpenAI:
     """创建 Google AI OpenAI 兼容 LLM 实例的便捷函数"""
@@ -242,7 +240,6 @@ def create_google_openai_llm(
         model=model,
         google_api_key=google_api_key,
         temperature=temperature,
-        max_tokens=max_tokens,
         **kwargs
     )
 
@@ -260,8 +257,7 @@ def test_google_openai_connection(
         # 创建客户端
         llm = create_google_openai_llm(
             model=model,
-            google_api_key=google_api_key,
-            max_tokens=50
+            google_api_key=google_api_key
         )
         
         # 发送测试消息
@@ -293,8 +289,7 @@ def test_google_openai_function_calling(
         # 创建客户端
         llm = create_google_openai_llm(
             model=model,
-            google_api_key=google_api_key,
-            max_tokens=200
+            google_api_key=google_api_key
         )
         
         # 定义测试工具

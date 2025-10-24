@@ -197,14 +197,6 @@ class ConfigManager:
                 ),
                 ModelConfig(
                     provider="openai",
-                    model_name="gpt-3.5-turbo",
-                    api_key="",
-                    max_tokens=4000,
-                    temperature=0.7,
-                    enabled=False
-                ),
-                ModelConfig(
-                    provider="openai",
                     model_name="gpt-4",
                     api_key="",
                     max_tokens=8000,
@@ -235,7 +227,9 @@ class ConfigManager:
             default_pricing = [
                 # 阿里百炼定价 (人民币)
                 PricingConfig("dashscope", "qwen-turbo", 0.002, 0.006, "CNY"),
+                PricingConfig("dashscope", "qwen-plus", 0.004, 0.012, "CNY"),
                 PricingConfig("dashscope", "qwen-plus-latest", 0.004, 0.012, "CNY"),
+                PricingConfig("dashscope", "qwen3-max", 0.02, 0.06, "CNY"),
                 PricingConfig("dashscope", "qwen-max", 0.02, 0.06, "CNY"),
 
                 # DeepSeek定价 (人民币) - 2025年最新价格
@@ -243,9 +237,10 @@ class ConfigManager:
                 PricingConfig("deepseek", "deepseek-coder", 0.0014, 0.0028, "CNY"),
 
                 # OpenAI定价 (美元)
-                PricingConfig("openai", "gpt-3.5-turbo", 0.0015, 0.002, "USD"),
                 PricingConfig("openai", "gpt-4", 0.03, 0.06, "USD"),
                 PricingConfig("openai", "gpt-4-turbo", 0.01, 0.03, "USD"),
+                PricingConfig("openai", "gpt-4o-mini", 0.00015, 0.0006, "USD"),
+                PricingConfig("openai", "gpt-4o", 0.005, 0.015, "USD"),
 
                 # Google定价 (美元)
                 PricingConfig("google", "gemini-2.5-pro", 0.00025, 0.0005, "USD"),

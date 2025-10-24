@@ -1,21 +1,18 @@
-# TradingAgents 中文增强版
+# 曼波投资 - 智能交易决策平台
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Version](https://img.shields.io/badge/Version-cn--0.1.15-green.svg)](./VERSION)
 [![Documentation](https://img.shields.io/badge/docs-中文文档-green.svg)](./docs/)
-[![Original](https://img.shields.io/badge/基于-TauricResearch/TradingAgents-orange.svg)](https://github.com/TauricResearch/TradingAgents)
 
 >
-> 🎯 **核心功能**: 原生OpenAI支持 | Google AI全面集成 | 自定义端点配置 | 智能模型选择 | 多LLM提供商支持 | 模型选择持久化 | Docker容器化部署 | 专业报告导出 | 完整A股支持 | 中文本地化
+> 🎯 **核心功能**: 多智能体分析 | Google AI 全面集成 | 自定义端点配置 | 智能模型选择 | 多 LLM 提供商支持 | Docker 容器化部署 | 专业报告导出 | 完整A股/港股/美股支持 | 中文本地化
 
-基于多智能体大语言模型的**中文金融交易决策框架**。专为中文用户优化，提供完整的A股/港股/美股分析能力。
+基于多智能体大语言模型的**中文金融交易决策框架**。专为中文投资者优化，提供完整的 A 股/港股/美股分析能力，助力智能投资决策。
 
-## 🙏 致敬源项目
+## 🚀 快速开始
 
-感谢 [Tauric Research](https://github.com/TauricResearch) 团队创造的革命性多智能体交易框架 [TradingAgents](https://github.com/TauricResearch/TradingAgents)！
-
-**🎯 我们的使命**: 为中国用户提供完整的中文化体验，支持A股/港股市场，集成国产大模型，推动AI金融技术在中文社区的普及应用。
+曼波投资为您提供专业的 AI 驱动投资分析平台，集成多种 LLM 提供商和先进的多智能体架构。
 
 ## 🎉 v1.0.0-preview 内测版本 - 全新架构升级
 

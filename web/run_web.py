@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-TradingAgents-CN Web应用启动脚本
+曼波投资 - 智能交易决策平台启动脚本
 """
 
 import os
@@ -190,7 +190,7 @@ import psutil
 def main():
     """主函数"""
     
-    logger.info(f"🚀 TradingAgents-CN Web应用启动器")
+    logger.info(f"🚀 曼波投资 - 智能交易决策平台启动器")
     logger.info(f"=")
     
     # 清理缓存文件（可选，避免Streamlit文件监控错误）
@@ -293,7 +293,7 @@ if __name__ == "__main__":
             logger.info(f"🚀 启动模式: 强制清理所有缓存")
             clean_cache_files(force_clean=True)
         elif sys.argv[1] == "--help":
-            logger.info(f"🚀 TradingAgents-CN Web应用启动器")
+            logger.info(f"🚀 曼波投资 - 智能交易决策平台启动器")
             logger.info(f"=")
             logger.info(f"用法:")
             logger.info(f"  python run_web.py           # 默认启动（清理项目缓存）")

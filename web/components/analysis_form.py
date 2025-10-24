@@ -104,18 +104,36 @@ def render_analysis_form():
         with col2:
             # 研究深度（使用缓存的值）
             cached_depth = cached_config.get('research_depth', 3) if cached_config else 3
+            if cached_depth > 4:
+                cached_depth = 4
             research_depth = st.select_slider(
                 "研究深度 🔍",
-                options=[1, 2, 3, 4, 5],
+                options=[1, 2, 3, 4],
                 value=cached_depth,
                 format_func=lambda x: {
                     1: "1级 - 快速分析",
                     2: "2级 - 基础分析",
                     3: "3级 - 标准分析",
-                    4: "4级 - 深度分析",
-                    5: "5级 - 全面分析"
+                    4: "4级 - 深度分析"
                 }[x],
                 help="选择分析的深度级别，级别越高分析越详细但耗时更长"
+            )
+
+            provider_options = {
+                "google": "🌟 Google AI (Gemini)",
+                "dashscope": "🇨🇳 阿里百炼",
+                "openai": "🤖 OpenAI",
+                "deepseek": "🚀 DeepSeek"
+            }
+            default_provider = cached_config.get('llm_provider', 'google') if cached_config else 'google'
+            if default_provider not in provider_options:
+                default_provider = 'google'
+            llm_provider = st.selectbox(
+                "LLM提供商",
+                options=list(provider_options.keys()),
+                index=list(provider_options.keys()).index(default_provider),
+                format_func=lambda x: provider_options[x],
+                help="选择使用的语言模型提供商"
             )
         
         # 分析师团队选择
@@ -249,6 +267,7 @@ def render_analysis_form():
             'stock_symbol': stock_symbol,
             'market_type': market_type,
             'research_depth': research_depth,
+            'llm_provider': llm_provider,
             'selected_analysts': [a[0] for a in selected_analysts],
             'include_sentiment': include_sentiment,
             'include_risk_assessment': include_risk_assessment,
@@ -296,6 +315,7 @@ def render_analysis_form():
             'analysis_date': str(analysis_date),
             'analysts': [a[0] for a in selected_analysts],
             'research_depth': research_depth,
+            'llm_provider': llm_provider,
             'include_sentiment': include_sentiment,
             'include_risk_assessment': include_risk_assessment,
             'custom_prompt': custom_prompt
@@ -306,6 +326,7 @@ def render_analysis_form():
             'stock_symbol': stock_symbol,
             'market_type': market_type,
             'research_depth': research_depth,
+            'llm_provider': llm_provider,
             'selected_analysts': [a[0] for a in selected_analysts],
             'include_sentiment': include_sentiment,
             'include_risk_assessment': include_risk_assessment,

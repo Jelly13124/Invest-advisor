@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tradingagents"
+name = "manbo-investment"
 version = "0.1.13-preview"
-description = "Add your description here"
+description = "曼波投资 - 基于多智能体大语言模型的中文金融交易决策框架"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [

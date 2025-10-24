@@ -467,6 +467,33 @@ def create_market_analyst(llm, toolkit):
                         )
                         tool_messages.append(tool_message)
 
+                    # 尝试从工具结果中提取K线数据并计算KDJ
+                    kdj_info = ""
+                    try:
+                        from tradingagents.utils.technical_indicators import calculate_kdj
+                        
+                        # 尝试解析工具结果中的OHLCV数据
+                        if isinstance(tool_result, dict):
+                            if 'high' in tool_result and 'low' in tool_result and 'close' in tool_result:
+                                high_array = tool_result.get('high', [])
+                                low_array = tool_result.get('low', [])
+                                close_array = tool_result.get('close', [])
+                                
+                                kdj_result = calculate_kdj(high_array, low_array, close_array)
+                                
+                                if kdj_result:
+                                    kdj_info = f"""
+KDJ技术指标分析：
+- K值: {kdj_result['latest_k']:.2f}
+- D值: {kdj_result['latest_d']:.2f}
+- J值: {kdj_result['latest_j']:.2f}
+- 信号: {kdj_result['signal']}
+"""
+                                    logger.info(f"📊 [市场分析师] KDJ指标已计算并纳入分析")
+                    except Exception as e:
+                        logger.debug(f"⚠️ [市场分析师] KDJ计算失败: {e}")
+                        kdj_info = ""
+
                     # 基于工具结果生成完整分析报告
                     analysis_prompt = f"""现在请基于上述工具获取的数据，生成详细的技术分析报告。
 
@@ -479,10 +506,12 @@ def create_market_analyst(llm, toolkit):
 
 请分析股票{ticker}的技术面情况，包括：
 - 价格趋势分析
-- 技术指标解读
+- 技术指标解读（包括下面的KDJ指标）
 - 支撑阻力位分析
 - 成交量分析
-- 投资建议"""
+- 投资建议
+
+{kdj_info}"""
 
                     # 构建完整的消息序列
                     messages = state["messages"] + [result] + tool_messages + [HumanMessage(content=analysis_prompt)]

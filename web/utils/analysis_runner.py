@@ -97,7 +97,7 @@ def extract_risk_assessment(state):
         logger.info(f"提取风险评估数据时出错: {e}")
         return None
 
-def run_stock_analysis(stock_symbol, analysis_date, analysts, research_depth, llm_provider, llm_model, market_type="美股", progress_callback=None):
+def run_stock_analysis(stock_symbol, analysis_date, analysts, research_depth, market_type="美股", llm_provider=None, progress_callback=None):
     """执行股票分析
 
     Args:
@@ -105,8 +105,8 @@ def run_stock_analysis(stock_symbol, analysis_date, analysts, research_depth, ll
         analysis_date: 分析日期
         analysts: 分析师列表
         research_depth: 研究深度
-        llm_provider: LLM提供商 (dashscope/deepseek/google)
-        llm_model: 大模型名称
+        market_type: 市场类型 (美股/A股/港股)
+        llm_provider: LLM提供商 (dashscope/deepseek/google/openai)
         progress_callback: 进度回调函数，用于更新UI状态
     """
 
@@ -176,6 +176,23 @@ def run_stock_analysis(stock_symbol, analysis_date, analysts, research_depth, ll
         logger, stock_symbol, "comprehensive_analysis", session_id
     )
 
+    # 尽早确定LLM提供商，以便日志和后续步骤使用
+    # 优先使用传入的参数，其次使用session_state中的form_config，最后使用市场类型默认值
+    if not llm_provider:
+        try:
+            import streamlit as st  # type: ignore
+        except ImportError:
+            st = None
+        
+        form_config = st.session_state.get('form_config', {}) if st else {}
+        selected_provider = form_config.get('llm_provider') if form_config else None
+        if selected_provider:
+            llm_provider = selected_provider
+        else:
+            llm_provider = 'dashscope' if market_type in ['A股', '港股'] else 'google'
+    
+    logger.info(f"✅ [LLM提供商] 已确定: {llm_provider}，市场类型: {market_type}")
+
     logger.info(f"🚀 [分析开始] 股票分析启动",
                extra={
                    'stock_symbol': stock_symbol,
@@ -183,7 +200,6 @@ def run_stock_analysis(stock_symbol, analysis_date, analysts, research_depth, ll
                    'analysts': analysts,
                    'research_depth': research_depth,
                    'llm_provider': llm_provider,
-                   'llm_model': llm_model,
                    'market_type': market_type,
                    'session_id': session_id,
                    'event_type': 'web_analysis_start'
@@ -195,7 +211,7 @@ def run_stock_analysis(stock_symbol, analysis_date, analysts, research_depth, ll
     if TOKEN_TRACKING_ENABLED:
         estimated_input = 2000 * len(analysts)  # 估算每个分析师2000个输入token
         estimated_output = 1000 * len(analysts)  # 估算每个分析师1000个输出token
-        estimated_cost = token_tracker.estimate_cost(llm_provider, llm_model, estimated_input, estimated_output)
+        estimated_cost = token_tracker.estimate_cost(llm_provider, None, estimated_input, estimated_output)
 
         update_progress(f"💰 预估分析成本: ¥{estimated_cost:.4f}")
 
@@ -224,8 +240,8 @@ def run_stock_analysis(stock_symbol, analysis_date, analysts, research_depth, ll
         update_progress("配置分析参数...")
         config = DEFAULT_CONFIG.copy()
         config["llm_provider"] = llm_provider
-        config["deep_think_llm"] = llm_model
-        config["quick_think_llm"] = llm_model
+        config["deep_think_llm"] = None
+        config["quick_think_llm"] = None
         # 根据研究深度调整配置
         if research_depth == 1:  # 1级 - 快速分析
             config["max_debate_rounds"] = 1
@@ -251,23 +267,14 @@ def run_stock_analysis(stock_symbol, analysis_date, analysts, research_depth, ll
                 config["quick_think_llm"] = "qwen-plus"
                 config["deep_think_llm"] = "qwen-plus"
             elif llm_provider == "deepseek":
-                config["quick_think_llm"] = "deepseek-chat"
+                config["quick_think_llM"] = "deepseek-chat"
                 config["deep_think_llm"] = "deepseek-chat"
             elif llm_provider == "openai":
-                config["quick_think_llm"] = llm_model
-                config["deep_think_llm"] = llm_model
-            elif llm_provider == "openai":
-                config["quick_think_llm"] = llm_model
-                config["deep_think_llm"] = llm_model
-            elif llm_provider == "openai":
-                config["quick_think_llm"] = llm_model
-                config["deep_think_llm"] = llm_model
-            elif llm_provider == "openai":
-                config["quick_think_llm"] = llm_model
-                config["deep_think_llm"] = llm_model
-            elif llm_provider == "openai":
-                config["quick_think_llm"] = llm_model
-                config["deep_think_llm"] = llm_model
+                config["quick_think_llm"] = "gpt-4o-mini"
+                config["deep_think_llm"] = "gpt-4o"
+            elif llm_provider == "google":
+                config["quick_think_llm"] = "gemini-2.0-flash"
+                config["deep_think_llm"] = "gemini-2.5-flash"
         elif research_depth == 3:  # 3级 - 标准分析 (默认)
             config["max_debate_rounds"] = 1
             config["max_risk_discuss_rounds"] = 2
@@ -279,6 +286,12 @@ def run_stock_analysis(stock_symbol, analysis_date, analysts, research_depth, ll
             elif llm_provider == "deepseek":
                 config["quick_think_llm"] = "deepseek-chat"
                 config["deep_think_llm"] = "deepseek-chat"
+            elif llm_provider == "openai":
+                config["quick_think_llm"] = "gpt-4o"
+                config["deep_think_llm"] = "gpt-4o"
+            elif llm_provider == "google":
+                config["quick_think_llm"] = "gemini-2.5-flash"
+                config["deep_think_llm"] = "gemini-2.5-flash"
         elif research_depth == 4:  # 4级 - 深度分析
             config["max_debate_rounds"] = 2
             config["max_risk_discuss_rounds"] = 2
@@ -290,82 +303,58 @@ def run_stock_analysis(stock_symbol, analysis_date, analysts, research_depth, ll
             elif llm_provider == "deepseek":
                 config["quick_think_llm"] = "deepseek-chat"
                 config["deep_think_llm"] = "deepseek-chat"
-        else:  # 5级 - 全面分析
-            config["max_debate_rounds"] = 3
-            config["max_risk_discuss_rounds"] = 3
-            config["memory_enabled"] = True
-            config["online_tools"] = True
-            if llm_provider == "dashscope":
-                config["quick_think_llm"] = "qwen3-max"
-                config["deep_think_llm"] = "qwen3-max"
-            elif llm_provider == "deepseek":
-                config["quick_think_llm"] = "deepseek-chat"
-                config["deep_think_llm"] = "deepseek-chat"
+            elif llm_provider == "openai":
+                config["quick_think_llm"] = "gpt-4o"
+                config["deep_think_llm"] = "gpt-4o"
+            elif llm_provider == "google":
+                config["quick_think_llm"] = "gemini-2.5-pro"
+                config["deep_think_llm"] = "gemini-2.5-pro"
 
         # 根据LLM提供商设置不同的配置
         if llm_provider == "dashscope":
             config["backend_url"] = "https://dashscope.aliyuncs.com/api/v1"
         elif llm_provider == "deepseek":
             config["backend_url"] = "https://api.deepseek.com"
-        elif llm_provider == "qianfan":
-            # 千帆（文心一言）配置
-            config["backend_url"] = "https://aip.baidubce.com"
-            # 根据研究深度设置千帆模型
-            if research_depth <= 2:  # 快速和基础分析
-                config["quick_think_llm"] = "ernie-3.5-8k"
-                config["deep_think_llm"] = "ernie-3.5-8k"
-            elif research_depth <= 4:  # 标准和深度分析
-                config["quick_think_llm"] = "ernie-3.5-8k"
-                config["deep_think_llm"] = "ernie-4.0-turbo-8k"
-            else:  # 全面分析
-                config["quick_think_llm"] = "ernie-4.0-turbo-8k"
-                config["deep_think_llm"] = "ernie-4.0-turbo-8k"
-            
-            logger.info(f"🤖 [千帆] 快速模型: {config['quick_think_llm']}")
-            logger.info(f"🤖 [千帆] 深度模型: {config['deep_think_llm']}")
         elif llm_provider == "google":
-            # Google AI不需要backend_url，使用默认的OpenAI格式
-            config["backend_url"] = "https://api.openai.com/v1"
+            # Google AI使用Google官方端点
+            config["backend_url"] = "https://generativelanguage.googleapis.com"
             
-            # 根据研究深度优化Google模型选择
+            # 根据研究深度优化Google模型选择（限制在核心三款模型内）
             if research_depth == 1:  # 快速分析 - 使用最快模型
-                config["quick_think_llm"] = "gemini-2.5-flash-lite-preview-06-17"  # 1.45s
-                config["deep_think_llm"] = "gemini-2.0-flash"  # 1.87s
-            elif research_depth == 2:  # 基础分析 - 使用快速模型
-                config["quick_think_llm"] = "gemini-2.0-flash"  # 1.87s
-                config["deep_think_llm"] = "gemini-1.5-pro"  # 2.25s
-            elif research_depth == 3:  # 标准分析 - 平衡性能
-                config["quick_think_llm"] = "gemini-1.5-pro"  # 2.25s
-                config["deep_think_llm"] = "gemini-2.5-flash"  # 2.73s
-            elif research_depth == 4:  # 深度分析 - 使用强大模型
-                config["quick_think_llm"] = "gemini-2.5-flash"  # 2.73s
-                config["deep_think_llm"] = "gemini-2.5-pro"  # 16.68s
-            else:  # 全面分析 - 使用最强模型
-                config["quick_think_llm"] = "gemini-2.5-pro"  # 16.68s
-                config["deep_think_llm"] = "gemini-2.5-pro"  # 16.68s
+                config["quick_think_llm"] = "gemini-2.5-flash"
+                config["deep_think_llm"] = "gemini-2.0-flash"
+            elif research_depth == 2:  # 基础分析 - 平衡速度与质量
+                config["quick_think_llm"] = "gemini-2.0-flash"
+                config["deep_think_llm"] = "gemini-2.5-flash"
+            elif research_depth == 3:  # 标准分析 - 双Flash平衡组合
+                config["quick_think_llm"] = "gemini-2.5-flash"
+                config["deep_think_llm"] = "gemini-2.5-flash"
+            else:  # 深度分析 - 使用Pro获取最高质量
+                config["quick_think_llm"] = "gemini-2.5-flash"
+                config["deep_think_llm"] = "gemini-2.5-pro"
             
             logger.info(f"🤖 [Google AI] 快速模型: {config['quick_think_llm']}")
             logger.info(f"🤖 [Google AI] 深度模型: {config['deep_think_llm']}")
         elif llm_provider == "openai":
             # OpenAI官方API
             config["backend_url"] = "https://api.openai.com/v1"
-            logger.info(f"🤖 [OpenAI] 使用模型: {llm_model}")
+            logger.info("🤖 [OpenAI] 使用推荐模型组合：快速 gpt-4o-mini，深度 gpt-4o")
             logger.info(f"🤖 [OpenAI] API端点: https://api.openai.com/v1")
         elif llm_provider == "openrouter":
             # OpenRouter使用OpenAI兼容API
             config["backend_url"] = "https://openrouter.ai/api/v1"
-            logger.info(f"🌐 [OpenRouter] 使用模型: {llm_model}")
+            logger.info("🌐 [OpenRouter] 集成已禁用")
             logger.info(f"🌐 [OpenRouter] API端点: https://openrouter.ai/api/v1")
         elif llm_provider == "siliconflow":
             config["backend_url"] = "https://api.siliconflow.cn/v1"
-            logger.info(f"🌐 [SiliconFlow] 使用模型: {llm_model}")
+            logger.info("🌐 [SiliconFlow] 集成已禁用")
             logger.info(f"🌐 [SiliconFlow] API端点: https://api.siliconflow.cn/v1")
         elif llm_provider == "custom_openai":
             # 自定义OpenAI端点
-            custom_base_url = st.session_state.get("custom_openai_base_url", "https://api.openai.com/v1")
+            custom_base_url = st.session_state.get("custom_openai_base_url", "https://api.openai.com/v1") if st else "https://api.openai.com/v1"
             config["backend_url"] = custom_base_url
             config["custom_openai_base_url"] = custom_base_url
-            logger.info(f"🔧 [自定义OpenAI] 使用模型: {llm_model}")
+            logger.info("🔧 [自定义OpenAI] 集成已禁用")
             logger.info(f"🔧 [自定义OpenAI] API端点: {custom_base_url}")
 
         # 修复路径问题 - 优先使用环境变量配置
@@ -479,12 +468,12 @@ def run_stock_analysis(stock_symbol, analysis_date, analysts, research_depth, ll
         if TOKEN_TRACKING_ENABLED:
             # 在实际应用中，这些值应该从LLM响应中获取
             # 这里使用基于分析师数量和研究深度的估算
-            actual_input_tokens = len(analysts) * (1500 if research_depth == "快速" else 2500 if research_depth == "标准" else 4000)
-            actual_output_tokens = len(analysts) * (800 if research_depth == "快速" else 1200 if research_depth == "标准" else 2000)
+            actual_input_tokens = len(analysts) * (1500 if research_depth == 1 else 2200 if research_depth == 2 else 3000 if research_depth == 3 else 4200)
+            actual_output_tokens = len(analysts) * (800 if research_depth == 1 else 1100 if research_depth == 2 else 1500 if research_depth == 3 else 2200)
 
             usage_record = token_tracker.track_usage(
                 provider=llm_provider,
-                model_name=llm_model,
+                model_name=config.get("deep_think_llm"),
                 input_tokens=actual_input_tokens,
                 output_tokens=actual_output_tokens,
                 session_id=session_id,
@@ -500,7 +489,7 @@ def run_stock_analysis(stock_symbol, analysis_date, analysts, research_depth, ll
             'analysts': analysts,
             'research_depth': research_depth,
             'llm_provider': llm_provider,
-            'llm_model': llm_model,
+            'llm_model': config.get('deep_think_llm'),
             'state': state,
             'decision': decision,
             'success': True,
@@ -602,7 +591,7 @@ def run_stock_analysis(stock_symbol, analysis_date, analysts, research_depth, ll
             'analysts': analysts,
             'research_depth': research_depth,
             'llm_provider': llm_provider,
-            'llm_model': llm_model,
+            'llm_model': config.get('deep_think_llm'),
             'state': {},  # 空状态，将显示占位符
             'decision': {},  # 空决策
             'success': False,
@@ -788,8 +777,8 @@ def validate_analysis_params(stock_symbol, analysis_date, analysts, research_dep
         errors.append(f"无效的分析师类型: {', '.join(invalid_analysts)}")
     
     # 验证研究深度
-    if not isinstance(research_depth, int) or research_depth < 1 or research_depth > 5:
-        errors.append("研究深度必须是1-5之间的整数")
+    if not isinstance(research_depth, int) or research_depth < 1 or research_depth > 4:
+        errors.append("研究深度必须是1-4之间的整数")
     
     # 验证分析日期
     try:

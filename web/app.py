@@ -31,11 +31,9 @@ except ImportError:
 load_dotenv(project_root / ".env", override=True)
 
 # 导入自定义组件
-from components.sidebar import render_sidebar
 from components.header import render_header
 from components.analysis_form import render_analysis_form
 from components.results_display import render_results
-from components.login import render_login_form, check_authentication, render_user_info, render_sidebar_user_info, render_sidebar_logout, require_permission
 from components.user_activity_dashboard import render_user_activity_dashboard, render_activity_summary_widget
 from utils.api_checker import check_api_keys
 from utils.analysis_runner import run_stock_analysis, validate_analysis_params, format_analysis_results
@@ -43,12 +41,11 @@ from utils.progress_tracker import SmartStreamlitProgressDisplay, create_smart_p
 from utils.async_progress_tracker import AsyncProgressTracker
 from components.async_progress_display import display_unified_progress
 from utils.smart_session_manager import get_persistent_analysis_id, set_persistent_analysis_id
-from utils.auth_manager import auth_manager
 from utils.user_activity_logger import user_activity_logger
 
 # 设置页面配置
 st.set_page_config(
-    page_title="TradingAgents-CN 股票分析平台",
+    page_title="曼波投资",
     page_icon="📈",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -125,7 +122,7 @@ st.markdown("""
     /* 全局样式 */
     .stApp {
         font-family: 'Inter', sans-serif;
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        background: #ffffff;
     }
     
     /* 主容器样式 */
@@ -133,18 +130,19 @@ st.markdown("""
         padding-top: 2rem;
         padding-bottom: 2rem;
         max-width: 1200px;
+        background: #ffffff;
     }
     
     /* 主标题样式 */
     .main-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #0099cc;
         padding: 2rem;
         border-radius: 20px;
         margin-bottom: 2rem;
         color: white;
         text-align: center;
-        box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 10px 40px rgba(0, 153, 204, 0.2);
+        border: 1px solid rgba(0, 153, 204, 0.3);
     }
     
     .main-title {
@@ -162,13 +160,12 @@ st.markdown("""
     
     /* 卡片样式 */
     .metric-card {
-        background: rgba(255, 255, 255, 0.9);
+        background: #ffffff;
         padding: 1.5rem;
         border-radius: 15px;
-        border: 1px solid rgba(255, 255, 255, 0.3);
+        border: 2px solid #add8e6;
         margin: 0.5rem 0;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        backdrop-filter: blur(20px);
+        box-shadow: 0 4px 12px rgba(0, 153, 204, 0.1);
         transition: all 0.3s ease;
         text-align: center;
     }
@@ -179,6 +176,7 @@ st.markdown("""
         text-overflow: ellipsis;
         margin-bottom: 0.5rem;
         font-size: 1rem;
+        color: #0099cc;
     }
     
     .metric-card p {
@@ -191,22 +189,22 @@ st.markdown("""
     
     .metric-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 8px 20px rgba(0, 153, 204, 0.2);
+        border-color: #0099cc;
     }
     
     .analysis-section {
-        background: rgba(255, 255, 255, 0.95);
+        background: #ffffff;
         padding: 2rem;
         border-radius: 20px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 12px rgba(0, 153, 204, 0.1);
         margin: 1.5rem 0;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        backdrop-filter: blur(20px);
+        border: 2px solid #add8e6;
     }
     
     /* 按钮样式 */
     .stButton > button {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #0099cc;
         color: white;
         border: none;
         border-radius: 12px;
@@ -214,20 +212,21 @@ st.markdown("""
         font-size: 1rem;
         font-weight: 600;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        box-shadow: 0 4px 12px rgba(0, 153, 204, 0.2);
     }
     
     .stButton > button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 8px 20px rgba(0, 153, 204, 0.3);
+        background: #0077aa;
     }
     
     /* 输入框样式 */
     .stTextInput > div > div > input,
     .stSelectbox > div > div > select,
     .stTextArea > div > div > textarea {
-        background: rgba(255, 255, 255, 0.9);
-        border: 2px solid #e2e8f0;
+        background: #ffffff;
+        border: 2px solid #add8e6;
         border-radius: 12px;
         padding: 0.75rem 1rem;
         font-size: 1rem;
@@ -237,48 +236,47 @@ st.markdown("""
     .stTextInput > div > div > input:focus,
     .stSelectbox > div > div > select:focus,
     .stTextArea > div > div > textarea:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        background: white;
+        border-color: #0099cc;
+        box-shadow: 0 0 0 3px rgba(0, 153, 204, 0.1);
+        background: #ffffff;
     }
     
     /* 侧边栏样式 */
     .css-1d391kg {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(20px);
+        background: #f0f7ff;
     }
     
     /* 状态框样式 */
     .success-box {
-        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-        border: 1px solid #9ae6b4;
+        background: #e6f9f5;
+        border: 2px solid #00cc99;
         border-radius: 12px;
         padding: 1.5rem;
         margin: 1rem 0;
-        box-shadow: 0 4px 15px rgba(154, 230, 180, 0.3);
+        box-shadow: 0 4px 12px rgba(0, 204, 153, 0.1);
     }
     
     .warning-box {
-        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-        border: 1px solid #f6d55c;
+        background: #fff9e6;
+        border: 2px solid #ffcc00;
         border-radius: 12px;
         padding: 1.5rem;
         margin: 1rem 0;
-        box-shadow: 0 4px 15px rgba(255, 234, 167, 0.3);
+        box-shadow: 0 4px 12px rgba(255, 204, 0, 0.1);
     }
     
     .error-box {
-        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-        border: 1px solid #f1556c;
+        background: #ffe6e6;
+        border: 2px solid #ff6666;
         border-radius: 12px;
         padding: 1.5rem;
         margin: 1rem 0;
-        box-shadow: 0 4px 15px rgba(245, 198, 203, 0.3);
+        box-shadow: 0 4px 12px rgba(255, 102, 102, 0.1);
     }
     
     /* 进度条样式 */
     .stProgress > div > div > div > div {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #0099cc;
         border-radius: 10px;
     }
     
@@ -288,16 +286,18 @@ st.markdown("""
     }
     
     .stTabs [data-baseweb="tab"] {
-        background: rgba(255, 255, 255, 0.7);
+        background: #ffffff;
         border-radius: 12px;
         padding: 0.5rem 1rem;
-        border: 1px solid rgba(255, 255, 255, 0.3);
+        border: 2px solid #add8e6;
         transition: all 0.3s ease;
+        color: #333333;
     }
     
     .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #0099cc;
         color: white;
+        border-color: #0099cc;
     }
     
     /* 数据框样式 */
@@ -414,212 +414,11 @@ def initialize_session_state():
     except Exception as e:
         logger.warning(f"⚠️ [配置恢复] 表单配置恢复失败: {e}")
 
-def check_frontend_auth_cache():
-    """检查前端缓存并尝试恢复登录状态"""
-    from utils.auth_manager import auth_manager
-    
-    logger.info("🔍 开始检查前端缓存恢复")
-    logger.info(f"📊 当前认证状态: {st.session_state.get('authenticated', False)}")
-    logger.info(f"🔗 URL参数: {dict(st.query_params)}")
-    
-    # 如果已经认证，确保状态同步
-    if st.session_state.get('authenticated', False):
-        # 确保auth_manager也知道用户已认证
-        if not auth_manager.is_authenticated() and st.session_state.get('user_info'):
-            logger.info("🔄 同步认证状态到auth_manager")
-            try:
-                auth_manager.login_user(
-                    st.session_state.user_info, 
-                    st.session_state.get('login_time', time.time())
-                )
-                logger.info("✅ 认证状态同步成功")
-            except Exception as e:
-                logger.warning(f"⚠️ 认证状态同步失败: {e}")
-        else:
-            logger.info("✅ 用户已认证，跳过缓存检查")
-        return
-    
-    # 检查URL参数中是否有恢复信息
-    try:
-        import base64
-        restore_data = st.query_params.get('restore_auth')
-        
-        if restore_data:
-            logger.info("📥 发现URL中的恢复参数，开始恢复登录状态")
-            # 解码认证数据
-            auth_data = json.loads(base64.b64decode(restore_data).decode())
-            
-            # 兼容旧格式（直接是用户信息）和新格式（包含loginTime）
-            if 'userInfo' in auth_data:
-                user_info = auth_data['userInfo']
-                # 使用当前时间作为新的登录时间，避免超时问题
-                # 因为前端已经验证了lastActivity没有超时
-                login_time = time.time()
-            else:
-                # 旧格式兼容
-                user_info = auth_data
-                login_time = time.time()
-                
-            logger.info(f"✅ 成功解码用户信息: {user_info.get('username', 'Unknown')}")
-            logger.info(f"🕐 使用当前时间作为登录时间: {login_time}")
-            
-            # 恢复登录状态
-            if auth_manager.restore_from_cache(user_info, login_time):
-                # 清除URL参数
-                del st.query_params['restore_auth']
-                logger.info(f"✅ 从前端缓存成功恢复用户 {user_info['username']} 的登录状态")
-                logger.info("🧹 已清除URL恢复参数")
-                # 立即重新运行以应用恢复的状态
-                logger.info("🔄 触发页面重新运行")
-                st.rerun()
-            else:
-                logger.error("❌ 恢复登录状态失败")
-                # 恢复失败，清除URL参数
-                del st.query_params['restore_auth']
-        else:
-            # 如果没有URL参数，注入前端检查脚本
-            logger.info("📝 没有URL恢复参数，注入前端检查脚本")
-            inject_frontend_cache_check()
-    except Exception as e:
-        logger.warning(f"⚠️ 处理前端缓存恢复失败: {e}")
-        # 如果恢复失败，清除可能损坏的URL参数
-        if 'restore_auth' in st.query_params:
-            del st.query_params['restore_auth']
-
-def inject_frontend_cache_check():
-    """注入前端缓存检查脚本"""
-    logger.info("📝 准备注入前端缓存检查脚本")
-    
-    # 如果已经注入过，不重复注入
-    if st.session_state.get('cache_script_injected', False):
-        logger.info("⚠️ 前端脚本已注入，跳过重复注入")
-        return
-    
-    # 标记已注入
-    st.session_state.cache_script_injected = True
-    logger.info("✅ 标记前端脚本已注入")
-    
-    cache_check_js = """
-    <script>
-    // 前端缓存检查和恢复
-    function checkAndRestoreAuth() {
-        console.log('🚀 开始执行前端缓存检查');
-        console.log('📍 当前URL:', window.location.href);
-        
-        try {
-            // 检查URL中是否已经有restore_auth参数
-            const currentUrl = new URL(window.location);
-            if (currentUrl.searchParams.has('restore_auth')) {
-                console.log('🔄 URL中已有restore_auth参数，跳过前端检查');
-                return;
-            }
-            
-            const authData = localStorage.getItem('tradingagents_auth');
-            console.log('🔍 检查localStorage中的认证数据:', authData ? '存在' : '不存在');
-            
-            if (!authData) {
-                console.log('🔍 前端缓存中没有登录状态');
-                return;
-            }
-            
-            const data = JSON.parse(authData);
-            console.log('📊 解析的认证数据:', data);
-            
-            // 验证数据结构
-            if (!data.userInfo || !data.userInfo.username) {
-                console.log('❌ 认证数据结构无效，清除缓存');
-                localStorage.removeItem('tradingagents_auth');
-                return;
-            }
-            
-            const now = Date.now();
-            const timeout = 10 * 60 * 1000; // 10分钟
-            const timeSinceLastActivity = now - data.lastActivity;
-            
-            console.log('⏰ 时间检查:', {
-                now: new Date(now).toLocaleString(),
-                lastActivity: new Date(data.lastActivity).toLocaleString(),
-                timeSinceLastActivity: Math.round(timeSinceLastActivity / 1000) + '秒',
-                timeout: Math.round(timeout / 1000) + '秒'
-            });
-            
-            // 检查是否超时
-            if (timeSinceLastActivity > timeout) {
-                localStorage.removeItem('tradingagents_auth');
-                console.log('⏰ 登录状态已过期，自动清除');
-                return;
-            }
-            
-            // 更新最后活动时间
-            data.lastActivity = now;
-            localStorage.setItem('tradingagents_auth', JSON.stringify(data));
-            console.log('🔄 更新最后活动时间');
-            
-            console.log('✅ 从前端缓存恢复登录状态:', data.userInfo.username);
-            
-            // 保留现有的URL参数，只添加restore_auth参数
-            // 传递完整的认证数据，包括原始登录时间
-            const restoreData = {
-                userInfo: data.userInfo,
-                loginTime: data.loginTime
-            };
-            const restoreParam = btoa(JSON.stringify(restoreData));
-            console.log('📦 生成恢复参数:', restoreParam);
-            
-            // 保留所有现有参数
-            const existingParams = new URLSearchParams(currentUrl.search);
-            existingParams.set('restore_auth', restoreParam);
-            
-            // 构建新URL，保留现有参数
-            const newUrl = currentUrl.origin + currentUrl.pathname + '?' + existingParams.toString();
-            console.log('🔗 准备跳转到:', newUrl);
-            console.log('📋 保留的URL参数:', Object.fromEntries(existingParams));
-            
-            window.location.href = newUrl;
-            
-        } catch (e) {
-            console.error('❌ 前端缓存恢复失败:', e);
-            localStorage.removeItem('tradingagents_auth');
-        }
-    }
-    
-    // 延迟执行，确保页面完全加载
-    console.log('⏱️ 设置1000ms延迟执行前端缓存检查');
-    setTimeout(checkAndRestoreAuth, 1000);
-    </script>
-    """
-    
-    st.components.v1.html(cache_check_js, height=0)
-
 def main():
     """主应用程序"""
 
     # 初始化会话状态
     initialize_session_state()
-
-    # 检查前端缓存恢复
-    check_frontend_auth_cache()
-
-    # 检查用户认证状态
-    if not auth_manager.is_authenticated():
-        # 最后一次尝试从session state恢复认证状态
-        if (st.session_state.get('authenticated', False) and 
-            st.session_state.get('user_info') and 
-            st.session_state.get('login_time')):
-            logger.info("🔄 从session state恢复认证状态")
-            try:
-                auth_manager.login_user(
-                    st.session_state.user_info, 
-                    st.session_state.login_time
-                )
-                logger.info(f"✅ 成功从session state恢复用户 {st.session_state.user_info.get('username', 'Unknown')} 的认证状态")
-            except Exception as e:
-                logger.warning(f"⚠️ 从session state恢复认证状态失败: {e}")
-        
-        # 如果仍然未认证，显示登录页面
-        if not auth_manager.is_authenticated():
-            render_login_form()
-            return
 
     # 全局侧边栏CSS样式 - 确保所有页面一致
     st.markdown("""
@@ -890,46 +689,10 @@ def main():
     # 渲染页面头部
     render_header()
 
-    # 侧边栏布局 - 标题在最顶部
-    st.sidebar.title("🤖 TradingAgents-CN")
-    st.sidebar.markdown("---")
-    
-    # 页面导航 - 在标题下方显示用户信息
-    render_sidebar_user_info()
-
-    # 在用户信息和功能导航之间添加分隔线
-    st.sidebar.markdown("---")
-
-    # 添加功能切换标题
-    st.sidebar.markdown("**🎯 功能导航**")
-
-    page = st.sidebar.selectbox(
-        "切换功能模块",
-        ["📊 股票分析", "⚙️ 配置管理", "💾 缓存管理", "💰 Token统计", "📋 操作日志", "📈 分析结果", "🔧 系统状态"],
-        label_visibility="collapsed"
-    )
-    
-    # 记录页面访问活动
-    try:
-        user_activity_logger.log_page_visit(
-            page_name=page,
-            page_params={
-                "page_url": f"/app?page={page.split(' ')[1] if ' ' in page else page}",
-                "page_type": "main_navigation",
-                "access_method": "sidebar_selectbox"
-            }
-        )
-    except Exception as e:
-        logger.warning(f"记录页面访问活动失败: {e}")
-
-    # 在功能选择和AI模型配置之间添加分隔线
-    st.sidebar.markdown("---")
+    page = "📊 股票分析"
 
     # 根据选择的页面渲染不同内容
     if page == "⚙️ 配置管理":
-        # 检查配置权限
-        if not require_permission("config"):
-            return
         try:
             from modules.config_management import render_config_management
             render_config_management()
@@ -938,9 +701,6 @@ def main():
             st.info("请确保已安装所有依赖包")
         return
     elif page == "💾 缓存管理":
-        # 检查管理员权限
-        if not require_permission("admin"):
-            return
         try:
             from modules.cache_management import main as cache_main
             cache_main()
@@ -948,9 +708,6 @@ def main():
             st.error(f"缓存管理页面加载失败: {e}")
         return
     elif page == "💰 Token统计":
-        # 检查配置权限
-        if not require_permission("config"):
-            return
         try:
             from modules.token_statistics import render_token_statistics
             render_token_statistics()
@@ -959,9 +716,6 @@ def main():
             st.info("请确保已安装所有依赖包")
         return
     elif page == "📋 操作日志":
-        # 检查管理员权限
-        if not require_permission("admin"):
-            return
         try:
             from components.operation_logs import render_operation_logs
             render_operation_logs()
@@ -970,9 +724,6 @@ def main():
             st.info("请确保已安装所有依赖包")
         return
     elif page == "📈 分析结果":
-        # 检查分析权限
-        if not require_permission("analysis"):
-            return
         try:
             from components.analysis_results import render_analysis_results
             render_analysis_results()
@@ -981,17 +732,11 @@ def main():
             st.info("请确保已安装所有依赖包")
         return
     elif page == "🔧 系统状态":
-        # 检查管理员权限
-        if not require_permission("admin"):
-            return
         st.header("🔧 系统状态")
         st.info("系统状态功能开发中...")
         return
 
     # 默认显示股票分析页面
-    # 检查分析权限
-    if not require_permission("analysis"):
-        return
         
     # 检查API密钥
     api_status = check_api_keys()
@@ -1034,63 +779,9 @@ def main():
         
         return
     
-    # 渲染侧边栏
-    config = render_sidebar()
-    
-    # 添加使用指南显示切换
-    # 如果正在分析或有分析结果，默认隐藏使用指南
-    default_show_guide = not (st.session_state.get('analysis_running', False) or st.session_state.get('analysis_results') is not None)
-    
-    # 如果用户没有手动设置过，使用默认值
-    if 'user_set_guide_preference' not in st.session_state:
-        st.session_state.user_set_guide_preference = False
-        st.session_state.show_guide_preference = default_show_guide
-    
-    show_guide = st.sidebar.checkbox(
-        "📖 显示使用指南", 
-        value=st.session_state.get('show_guide_preference', default_show_guide), 
-        help="显示/隐藏右侧使用指南",
-        key="guide_checkbox"
-    )
-    
-    # 记录用户的选择
-    if show_guide != st.session_state.get('show_guide_preference', default_show_guide):
-        st.session_state.user_set_guide_preference = True
-        st.session_state.show_guide_preference = show_guide
-
-    # 添加状态清理按钮
-    st.sidebar.markdown("---")
-    if st.sidebar.button("🧹 清理分析状态", help="清理僵尸分析状态，解决页面持续刷新问题"):
-        # 清理session state
-        st.session_state.analysis_running = False
-        st.session_state.current_analysis_id = None
-        st.session_state.analysis_results = None
-
-        # 清理所有自动刷新状态
-        keys_to_remove = []
-        for key in st.session_state.keys():
-            if 'auto_refresh' in key:
-                keys_to_remove.append(key)
-
-        for key in keys_to_remove:
-            del st.session_state[key]
-
-        # 清理死亡线程
-        from utils.thread_tracker import cleanup_dead_analysis_threads
-        cleanup_dead_analysis_threads()
-
-        st.sidebar.success("✅ 分析状态已清理")
-        st.rerun()
-
-    # 在侧边栏底部添加退出按钮
-    render_sidebar_logout()
-
     # 主内容区域 - 根据是否显示指南调整布局
-    if show_guide:
-        col1, col2 = st.columns([2, 1])  # 2:1比例，使用指南占三分之一
-    else:
-        col1 = st.container()
-        col2 = None
+    col1 = st.container()
+    col2 = None
     
     with col1:
         # 1. 分析配置区域
@@ -1118,10 +809,8 @@ def main():
 
         # 添加接收日志
         if form_data.get('submitted', False):
-            logger.debug(f"🔍 [APP DEBUG] ===== 主应用接收表单数据 =====")
-            logger.debug(f"🔍 [APP DEBUG] 接收到的form_data: {form_data}")
-            logger.debug(f"🔍 [APP DEBUG] 股票代码: '{form_data['stock_symbol']}'")
-            logger.debug(f"🔍 [APP DEBUG] 市场类型: '{form_data['market_type']}'")
+            # Debug logging disabled
+            pass
 
         # 检查是否提交了表单
         if form_data.get('submitted', False) and not st.session_state.get('analysis_running', False):
@@ -1147,11 +836,6 @@ def main():
                 st.session_state.analysis_results = None
                 logger.info("🧹 [新分析] 清空旧的分析结果")
                 
-                # 自动隐藏使用指南（除非用户明确设置要显示）
-                if not st.session_state.get('user_set_guide_preference', False):
-                    st.session_state.show_guide_preference = False
-                    logger.info("📖 [界面] 开始分析，自动隐藏使用指南")
-
                 # 生成分析ID
                 import uuid
                 analysis_id = f"analysis_{uuid.uuid4().hex[:8]}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
@@ -1171,7 +855,7 @@ def main():
                     analysis_id=analysis_id,
                     analysts=form_data['analysts'],
                     research_depth=form_data['research_depth'],
-                    llm_provider=config['llm_provider']
+                    llm_provider=form_data.get('llm_provider', 'google')
                 )
 
                 # 创建进度回调函数
@@ -1222,9 +906,8 @@ def main():
                             analysis_date=form_data['analysis_date'],
                             analysts=form_data['analysts'],
                             research_depth=form_data['research_depth'],
-                            llm_provider=config['llm_provider'],
                             market_type=form_data.get('market_type', '美股'),
-                            llm_model=config['llm_model'],
+                            llm_provider=form_data.get('llm_provider', None),
                             progress_callback=progress_callback
                         )
 
@@ -1447,7 +1130,7 @@ def main():
                 st.session_state.show_analysis_results = False
     
     # 只有在显示指南时才渲染右侧内容
-    if show_guide and col2 is not None:
+    if col2 is not None:
         with col2:
             st.markdown("### ℹ️ 使用指南")
         
