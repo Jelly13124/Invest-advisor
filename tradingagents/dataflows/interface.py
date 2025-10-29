@@ -926,32 +926,44 @@ def get_fundamentals_finnhub(ticker, curr_date):
         # 基本财务指标
         if basic_financials and 'metric' in basic_financials:
             metrics = basic_financials['metric']
+
+            def _format_metric(value, suffix=""):
+                """Safely format optional numeric metrics returned by Finnhub."""
+                if value is None:
+                    return "N/A"
+                try:
+                    numeric_value = float(value)
+                except (TypeError, ValueError):
+                    return f"{value}{suffix}" if suffix else str(value)
+                formatted = f"{numeric_value:.2f}"
+                return f"{formatted}{suffix}"
+
             report += "## 关键财务指标\n"
             report += "| 指标 | 数值 |\n"
             report += "|------|------|\n"
-            
+
             # 估值指标
             if 'peBasicExclExtraTTM' in metrics:
-                report += f"| 市盈率 (PE) | {metrics['peBasicExclExtraTTM']:.2f} |\n"
+                report += f"| 市盈率 (PE) | {_format_metric(metrics.get('peBasicExclExtraTTM'))} |\n"
             if 'psAnnual' in metrics:
-                report += f"| 市销率 (PS) | {metrics['psAnnual']:.2f} |\n"
+                report += f"| 市销率 (PS) | {_format_metric(metrics.get('psAnnual'))} |\n"
             if 'pbAnnual' in metrics:
-                report += f"| 市净率 (PB) | {metrics['pbAnnual']:.2f} |\n"
-            
+                report += f"| 市净率 (PB) | {_format_metric(metrics.get('pbAnnual'))} |\n"
+
             # 盈利能力指标
             if 'roeTTM' in metrics:
-                report += f"| 净资产收益率 (ROE) | {metrics['roeTTM']:.2f}% |\n"
+                report += f"| 净资产收益率 (ROE) | {_format_metric(metrics.get('roeTTM'), suffix='%')} |\n"
             if 'roaTTM' in metrics:
-                report += f"| 总资产收益率 (ROA) | {metrics['roaTTM']:.2f}% |\n"
+                report += f"| 总资产收益率 (ROA) | {_format_metric(metrics.get('roaTTM'), suffix='%')} |\n"
             if 'netProfitMarginTTM' in metrics:
-                report += f"| 净利润率 | {metrics['netProfitMarginTTM']:.2f}% |\n"
-            
+                report += f"| 净利润率 | {_format_metric(metrics.get('netProfitMarginTTM'), suffix='%')} |\n"
+
             # 财务健康指标
             if 'currentRatioAnnual' in metrics:
-                report += f"| 流动比率 | {metrics['currentRatioAnnual']:.2f} |\n"
+                report += f"| 流动比率 | {_format_metric(metrics.get('currentRatioAnnual'))} |\n"
             if 'totalDebt/totalEquityAnnual' in metrics:
-                report += f"| 负债权益比 | {metrics['totalDebt/totalEquityAnnual']:.2f} |\n"
-            
+                report += f"| 负债权益比 | {_format_metric(metrics.get('totalDebt/totalEquityAnnual'))} |\n"
+
             report += "\n"
         
         # 收益历史
